@@ -46,9 +46,15 @@ describe RequestLogAnalyzer, 'running from command line' do
     output.any? { |line| /<html[^>]*>/ =~ line}.should be_true
   end
 
-  it "should run with the --sqlite3 option" do
-    run("#{log_fixture(:rails_1x)} --sqlite3 #{temp_output_file(:database)}")
+  it "should run with the --database sqlite3 option" do
+    run("#{log_fixture(:rails_1x)} --database sqlite3 #{temp_output_file(:database)}")
     File.exist?(temp_output_file(:database)).should be_true
+  end
+
+  it "should run with the --database mysql option" do
+    run("#{log_fixture(:rails_1x)} --database mysql root analyst")
+    ActiveRecord::Base.establish_connection(:adapter => 'mysql', :username => 'root', :database => 'analyst')
+    ActiveRecord::Base.connection.select_all("select * from processing_lines").should_not be nil
   end
 
   it "should use no colors in the report with the --boring option" do

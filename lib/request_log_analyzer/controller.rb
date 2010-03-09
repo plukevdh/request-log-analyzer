@@ -24,7 +24,6 @@ module RequestLogAnalyzer
       options = {}
       
       # Copy fields
-      options[:database]       = arguments[:database]
       options[:reset_database] = arguments[:reset_database]
       options[:debug]          = arguments[:debug]
       options[:yaml]           = arguments[:yaml] || arguments[:dump]
@@ -45,12 +44,18 @@ module RequestLogAnalyzer
       options[:mailhost]       = arguments[:mailhost] 
       
       #TODO: Refactor
-      if options[:database][0] == "mysql"
+      if arguments[:database]
          options[:database] = {}
-         options[:database][:adapter] = arguments[:database][0]
-         options[:database][:username] = arguments[:database][1]
-         options[:database][:database] = arguments[:database][2]
-         options[:database][:password] = arguments[:database][3]
+         case arguments[:database][0] 
+         when "mysql"
+            options[:database][:adapter] = arguments[:database][0]
+            options[:database][:username] = arguments[:database][1]
+            options[:database][:database] = arguments[:database][2]
+            options[:database][:password] = arguments[:database][3]
+         when "sqlite", "sqlite3"
+            options[:database][:adapter] = arguments[:database][0]
+            options[:database][:database] = arguments[:database][1]
+         end
       end
       
       # Apache format workaround
@@ -185,7 +190,7 @@ module RequestLogAnalyzer
       # Kickstart the controller
       controller = Controller.new(  RequestLogAnalyzer::Source::LogParser.new(file_format, :source_files => options[:source_files]),
                                     { :output => output_instance,
-                                      :database => options[:database],                # FUGLY!
+                                      :database => options[:database],
                                       :yaml => options[:yaml], 
                                       :reset_database => options[:reset_database],
                                       :no_progress => options[:no_progress]})
@@ -220,9 +225,12 @@ module RequestLogAnalyzer
       options[:aggregator].each { |agg| controller.add_aggregator(agg.to_sym) }
       controller.add_aggregator(:summarizer)          if options[:aggregator].empty?
       controller.add_aggregator(:echo)                if options[:debug]
-      controller.add_aggregator(:database_inserter)   if options[:database][0] == 'sqlite3' && !options[:aggregator].include?('sqlite3')
-      controller.add_aggregator(:mysql_inserter)   if options[:database][:adapter] == 'mysql' && !options[:aggregator].include?('mysql')
-
+      
+      if options[:database] 
+         controller.add_aggregator(:database_inserter)   if options[:database][:adapter] == 'sqlite3' && !options[:aggregator].include?('sqlite3')
+         controller.add_aggregator(:mysql_inserter)   if options[:database][:adapter] == 'mysql' && !options[:aggregator].include?('mysql')
+      end
+      
       file_format.setup_environment(controller)
       return controller
     end  

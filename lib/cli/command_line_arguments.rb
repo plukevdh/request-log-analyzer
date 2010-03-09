@@ -33,7 +33,7 @@ module CommandLine
         return parameter
       elsif @parameter_count == :any
         parameters = []
-        while parameter = arguments_parser.next_parameter && parameter != '--'
+        while (parameter = arguments_parser.next_parameter) && parameter != '--'
           parameters << parameter
         end
         return parameters

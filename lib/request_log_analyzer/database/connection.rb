@@ -14,6 +14,8 @@ module RequestLogAnalyzer::Database::Connection
   def connect(connection_identifier)
     if connection_identifier.kind_of?(Hash)
       RequestLogAnalyzer::Database::Base.establish_connection(connection_identifier)
+    elsif connection_identifier.kind_of?(Array)
+      RequestLogAnalyzer::Database::Base.establish_connection(connection_identifier)
     elsif connection_identifier == ':memory:'
       RequestLogAnalyzer::Database::Base.establish_connection(:adapter => 'sqlite3', :database => ':memory:')
     elsif connection_hash = RequestLogAnalyzer::Database::Connection.from_string(connection_identifier)

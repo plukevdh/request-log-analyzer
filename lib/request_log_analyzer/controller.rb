@@ -44,6 +44,15 @@ module RequestLogAnalyzer
       options[:report_amount]  = arguments[:report_amount]
       options[:mailhost]       = arguments[:mailhost] 
       
+      #TODO: Refactor
+      if options[:database][0] == "mysql"
+         options[:database] = {}
+         options[:database][:adapter] = arguments[:database][0]
+         options[:database][:username] = arguments[:database][1]
+         options[:database][:database] = arguments[:database][2]
+         options[:database][:password] = arguments[:database][3]
+      end
+      
       # Apache format workaround
       if arguments[:rails_format]
         options[:format] = {:rails => arguments[:rails_format]}
@@ -211,7 +220,8 @@ module RequestLogAnalyzer
       options[:aggregator].each { |agg| controller.add_aggregator(agg.to_sym) }
       controller.add_aggregator(:summarizer)          if options[:aggregator].empty?
       controller.add_aggregator(:echo)                if options[:debug]
-      controller.add_aggregator(:database_inserter)   if options[:database] && !options[:aggregator].include?('database')
+      controller.add_aggregator(:database_inserter)   if options[:database][0] == 'sqlite3' && !options[:aggregator].include?('sqlite3')
+      controller.add_aggregator(:mysql_inserter)   if options[:database][:adapter] == 'mysql' && !options[:aggregator].include?('mysql')
 
       file_format.setup_environment(controller)
       return controller

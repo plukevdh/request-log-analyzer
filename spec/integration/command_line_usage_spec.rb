@@ -52,9 +52,15 @@ describe RequestLogAnalyzer, 'running from command line' do
   end
 
   it "should run with the --database mysql option" do
-    run("#{log_fixture(:rails_1x)} --database mysql root analyst")
+    run("#{log_fixture(:rails_1x)} --database mysql root analyst --reset-database")
     ActiveRecord::Base.establish_connection(:adapter => 'mysql', :username => 'root', :database => 'analyst')
-    ActiveRecord::Base.connection.select_all("select * from processing_lines").should_not be nil
+    ActiveRecord::Base.connection.select_all("select * from processing_lines").empty?.should_not be true
+  end
+
+  it "should run with the --database oracle option" do
+    run("#{log_fixture(:rails_1x)} --database oracle luke_v //ptvlhesdev1-vip.HARGRAY.ORG/dev rock#ROLE --reset-database")
+    ActiveRecord::Base.establish_connection(:adapter => 'oracle_enhanced', :username => 'luke_v', :database => '//ptvlhesdev1-vip.HARGRAY.ORG/dev', :password => "rock#ROLE")
+    ActiveRecord::Base.connection.select_all("select * from processing_lines").empty?.should_not be true
   end
 
   it "should use no colors in the report with the --boring option" do

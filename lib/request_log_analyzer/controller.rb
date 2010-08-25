@@ -21,7 +21,7 @@ module RequestLogAnalyzer
     # <tt>arguments<tt> A CommandLine::Arguments hash containing parsed commandline parameters.
     def self.build_from_arguments(arguments)
       
-      require 'lib/mixins/gets_memory_protection' if arguments[:gets_memory_protection]
+      require File.dirname(__FILE__) + '/../mixins/gets_memory_protection' if arguments[:gets_memory_protection]
       
       options = {}
       
@@ -47,6 +47,7 @@ module RequestLogAnalyzer
       options[:mailhost]       = arguments[:mailhost] 
       options[:mailsubject]    = arguments[:mailsubject]
       options[:silent]         = arguments[:silent] 
+      options[:parse_strategy] = arguments[:parse_strategy] 
       
       #TODO: Refactor
       if options[:database_type]
@@ -203,14 +204,17 @@ module RequestLogAnalyzer
       end
       
       # Kickstart the controller
-      controller = Controller.new(  RequestLogAnalyzer::Source::LogParser.new(file_format, :source_files => options[:source_files]),
-                                    { :output => output_instance,
-                                      :database => options[:database],
-                                      :yaml => options[:yaml], 
-                                      :reset_database => options[:reset_database],
-                                      :no_progress => options[:no_progress], 
-                                      :silent => options[:silent],
-                                    })
+      controller = 
+        Controller.new(RequestLogAnalyzer::Source::LogParser.new(file_format,  
+                                                                 :source_files => options[:source_files], 
+                                                                 :parse_strategy => options[:parse_strategy]),
+                       { :output         => output_instance,
+                         :database       => options[:database],                # FUGLY!
+                         :yaml           => options[:yaml], 
+                         :reset_database => options[:reset_database],
+                         :no_progress    => options[:no_progress], 
+                         :silent         => options[:silent]
+                       })
 
       # register filters
       if options[:after] || options[:before]

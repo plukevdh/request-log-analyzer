@@ -30,9 +30,16 @@ module RequestLogAnalyzer
 
       # Converts :eval field, which should evaluate to a hash.
       def convert_eval(value, capture_definition)
-        eval(value).inject({}) { |h, (k, v)| h[k.to_sym] = v; h}
-      rescue SyntaxError
+        eval(sanitize_parameters(value)).inject({}) { |h, (k, v)| h[k.to_sym] = v; h}
+			# Wide range of errors possible with wild eval. ATM we choose to crash on this.
+      rescue SyntaxError 
         nil
+      end
+
+      # Removes certain string sequences which would be problematic for eval.
+      # TODO remove all characters not valid in ruby symbols
+      def sanitize_parameters(parameter_string)
+        parameter_string.gsub(/#</, '"').gsub(/>,/, '", ').gsub(/\\0/, '')
       end
 
       # Slow default method to parse timestamps.

@@ -8,11 +8,11 @@ module RequestLogAnalyzer::FileFormat
 
     extend CommonRegularExpressions
 
-    # Started GET "/queries" for 127.0.0.1 at 2010-02-25 16:15:18
+    # beta4: Started GET "/" for 127.0.0.1 at Wed Jul 07 09:13:27 -0700 2010 (different time format)
     line_definition :started do |line|
       line.header = true
       line.teaser = /Started /
-      line.regexp = /Started ([A-Z]+) "([^"]+)" for (#{ip_address}) at (#{timestamp('%Y-%m-%d %H:%M:%S')})/
+      line.regexp = /Started ([A-Z]+) "([^"]+)" for (#{ip_address}) at (#{timestamp('%a %b %d %H:%M:%S %z %Y')})/
       
       line.capture(:method)
       line.capture(:path)
@@ -30,14 +30,18 @@ module RequestLogAnalyzer::FileFormat
       line.capture(:format)
     end
     
-    # Completed in 9ms (Views: 4.9ms | ActiveRecord: 0.5ms) with 200
+    # Completed 200 OK in 224ms (Views: 200.2ms | ActiveRecord: 3.4ms)
+    # Completed 302 Found in 23ms
+    # Completed   in 189ms
     line_definition :completed do |line|
       line.footer = true
       line.teaser = /Completed /
-      line.regexp = /Completed (\d+) .* in (\d+)ms \([^\)]*\)/
+      line.regexp = /Completed (\d+)? .*in (\d+)ms(?:[^(]*\(Views: ((?:\d|\.)+)ms .* ActiveRecord: ((?:\d|\.)+)ms\))?/
 
       line.capture(:status).as(:integer)
       line.capture(:duration).as(:duration, :unit => :msec)
+      line.capture(:view).as(:duration, :unit => :msec)
+      line.capture(:db).as(:duration, :unit => :msec)
     end
     
     # ActionView::Template::Error (undefined local variable or method `field' for #<Class>) on line #3 of /Users/willem/Code/warehouse/app/views/queries/execute.csv.erb:
@@ -69,16 +73,26 @@ module RequestLogAnalyzer::FileFormat
       analyze.frequency :status, :title => 'HTTP statuses returned'
       
       analyze.duration :duration, :category => REQUEST_CATEGORIZER, :title => "Request duration",    :line_type => :completed
-      # analyze.duration :view,     :category => REQUEST_CATEGORIZER, :title => "View rendering time", :line_type => :completed
-      # analyze.duration :db,       :category => REQUEST_CATEGORIZER, :title => "Database time",       :line_type => :completed
+      analyze.duration :view,     :category => REQUEST_CATEGORIZER, :title => "View rendering time", :line_type => :completed
+      analyze.duration :db,       :category => REQUEST_CATEGORIZER, :title => "Database time",       :line_type => :completed
       
       analyze.frequency :category => REQUEST_CATEGORIZER, :title => 'Process blockers (> 1 sec duration)',
         :if => lambda { |request| request[:duration] && request[:duration] > 1.0 }
     end
     
     class Request < RequestLogAnalyzer::Request
-      def convert_timestamp(value, defintion)
-        value.gsub(/[^0-9]/, '')[0...14].to_i
+      # Used to handle conversion of abbrev. month name to a digit
+      MONTHS = %w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)
+      
+      def convert_timestamp(value, definition)
+        value.gsub!(/\W/,'')
+        time_as_str = value[-4..-1] # year
+        # convert the month to a 2-digit representation
+        month = MONTHS.index(value[3..5])+1
+        month < 10 ? time_as_str << "0#{month}" : time_as_str << month
+        
+        time_as_str << value[6..13] # day of month + time
+        time_as_str.to_i
       end
     end
 

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe RequestLogAnalyzer::Aggregator::DatabaseInserter do
+describe RequestLogAnalyzer::Aggregator::SqliteInserter do
 
   before(:all) do
     @log_parser = RequestLogAnalyzer::Source::LogParser.new(testing_format)
@@ -12,7 +12,7 @@ describe RequestLogAnalyzer::Aggregator::DatabaseInserter do
 
     before(:each) do
       @database = mock_database(:create_database_schema!, :drop_database_schema!, :file_format=)
-      @database_inserter = RequestLogAnalyzer::Aggregator::DatabaseInserter.new(@log_parser)
+      @database_inserter = RequestLogAnalyzer::Aggregator::SqliteInserter.new(@log_parser)
       RequestLogAnalyzer::Database.stub!(:new).and_return(@database)
     end
 
@@ -48,7 +48,7 @@ describe RequestLogAnalyzer::Aggregator::DatabaseInserter do
     context "using a #{name} database" do
 
       before(:each) do
-        @database_inserter = RequestLogAnalyzer::Aggregator::DatabaseInserter.new(@log_parser, :database => connection, :reset_database => true)
+        @database_inserter = RequestLogAnalyzer::Aggregator::SqliteInserter.new(@log_parser, :database => connection, :reset_database => true)
         @database_inserter.prepare
 
         @incomplete_request = testing_format.request( {:line_type => :first, :request_no => 564})

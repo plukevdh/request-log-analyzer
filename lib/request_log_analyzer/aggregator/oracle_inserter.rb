@@ -1,18 +1,5 @@
-
 module RequestLogAnalyzer::Aggregator
-
-  # The database aggregator will create an SQLite3 database with all parsed request information.
-  #
-  # The prepare method will create a database schema according to the file format definitions.
-  # It will also create ActiveRecord::Base subclasses to interact with the created tables.
-  # Then, the aggregate method will be called for every parsed request. The information of
-  # these requests is inserted into the tables using the ActiveRecord classes.
-  #
-  # A requests table will be created, in which a record is inserted for every parsed request.
-  # For every line type, a separate table will be created with a request_id field to point to
-  # the request record, and a field for every parsed value. Finally, a warnings table will be
-  # created to log all parse warnings.
-  class DatabaseInserter < Base
+  class OracleInserter < Base
 
     attr_reader :request_count, :sources, :database
 
@@ -20,7 +7,7 @@ module RequestLogAnalyzer::Aggregator
     # current file format
     def prepare
       @sources = {}
-      @database = RequestLogAnalyzer::Database.new(options[:database])
+      @database =  RequestLogAnalyzer::Database.new(options[:database])
       @database.file_format = source.file_format
 
       database.drop_database_schema! if options[:reset_database]
@@ -39,7 +26,7 @@ module RequestLogAnalyzer::Aggregator
         @request_object.send("#{line[:line_type]}_lines").build(attributes)
       end
       @request_object.save!
-    rescue SQLite3::SQLException => e
+    rescue OracleEnhanced::OCIException => e
       raise Interrupt, e.message
     end
 
@@ -71,7 +58,7 @@ module RequestLogAnalyzer::Aggregator
     def report(output)
       output.title('Request database created')
 
-      output <<  "A database file has been created with all parsed request information.\n"
+      output <<  "An oracle database has been created with all parsed request information.\n"
       output <<  "#{@request_count} requests have been added to the database.\n"
       output << "\n"
       output <<  "To open a Ruby console to inspect the database, run the following command.\n"

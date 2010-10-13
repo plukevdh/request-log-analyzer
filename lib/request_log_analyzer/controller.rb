@@ -226,7 +226,11 @@ module RequestLogAnalyzer
       options[:aggregator].each { |agg| controller.add_aggregator(agg.to_sym) }
       controller.add_aggregator(:summarizer)          if options[:aggregator].empty?
       controller.add_aggregator(:echo)                if options[:debug]
-      controller.add_aggregator(:database_inserter)   if options[:database] && !options[:aggregator].include?('database')
+      if options[:database]
+        controller.add_aggregator(:database_inserter) if !options[:aggregator].include?('sqlite') && options[:database][0] == "sqlite"
+        controller.add_aggregator(:mysql_inserter) if !options[:aggregator].include?('mysql') && options[:database][0] == "mysql"
+        controller.add_aggregator(:oracle_inserter) if !options[:aggregator].include?('oracle') && options[:database][0] == "oracle"
+      end
 
       file_format.setup_environment(controller)
       return controller

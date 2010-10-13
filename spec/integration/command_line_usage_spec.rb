@@ -57,8 +57,8 @@ describe RequestLogAnalyzer, 'running from command line' do
     output.any? { |line| /<html[^>]*>/ =~ line}.should be_true
   end
 
-  it "should run with the --database option" do
-    run("#{log_fixture(:rails_1x)} --database #{temp_output_file(:database)}")
+  it "should run with the --database sqlite option" do
+    run("#{log_fixture(:rails_1x)} --database sqlite #{temp_output_file(:database)}")
     File.exist?(temp_output_file(:database)).should be_true
   end
 

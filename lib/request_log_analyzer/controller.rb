@@ -26,6 +26,7 @@ module RequestLogAnalyzer
       options = {}
       
       # Copy fields
+      options[:database_type]  = arguments[:database] ? arguments[:database].shift : false
       options[:database]       = arguments[:database]
       options[:reset_database] = arguments[:reset_database]
       options[:debug]          = arguments[:debug]
@@ -189,6 +190,7 @@ module RequestLogAnalyzer
                                                                  :source_files => options[:source_files], 
                                                                  :parse_strategy => options[:parse_strategy]),
                        { :output         => output_instance,
+                         :database_type  => options[:database_type],
                          :database       => options[:database],                # FUGLY!
                          :yaml           => options[:yaml], 
                          :reset_database => options[:reset_database],
@@ -226,10 +228,11 @@ module RequestLogAnalyzer
       options[:aggregator].each { |agg| controller.add_aggregator(agg.to_sym) }
       controller.add_aggregator(:summarizer)          if options[:aggregator].empty?
       controller.add_aggregator(:echo)                if options[:debug]
-      if options[:database]
-        controller.add_aggregator(:database_inserter) if !options[:aggregator].include?('sqlite') && options[:database][0] == "sqlite"
-        controller.add_aggregator(:mysql_inserter) if !options[:aggregator].include?('mysql') && options[:database][0] == "mysql"
-        controller.add_aggregator(:oracle_inserter) if !options[:aggregator].include?('oracle') && options[:database][0] == "oracle"
+
+      if options[:database_type] && !options[:database].empty?
+        controller.add_aggregator(:sqlite_inserter) if !options[:aggregator].include?('sqlite') && options[:database_type] == "sqlite"
+        controller.add_aggregator(:mysql_inserter) if !options[:aggregator].include?('mysql') && options[:database_type] == "mysql"
+        controller.add_aggregator(:oracle_inserter) if !options[:aggregator].include?('oracle') && options[:database_type] == "oracle"
       end
 
       file_format.setup_environment(controller)

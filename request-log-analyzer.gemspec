@@ -2,8 +2,8 @@ Gem::Specification.new do |s|
   s.name    = "request-log-analyzer"
   
   # Do not set the version and date field manually, this is done by the release script
-  s.version = "1.9.3"
-  s.date    = "2010-10-04"
+  s.version = "1.9.5"
+  s.date    = "2010-10-14"
 
   s.rubyforge_project = 'r-l-a'
 
@@ -28,7 +28,7 @@ Gem::Specification.new do |s|
   s.requirements << "To use the database inserter, ActiveRecord and an appropriate database adapter are required."
 
   s.add_development_dependency('rake')
-  s.add_development_dependency('rspec')
+  s.add_development_dependency('rspec', '~> 2.0')
 
   s.add_development_dependency('activerecord')
   s.add_development_dependency('sqlite3-ruby')

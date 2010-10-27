@@ -81,10 +81,8 @@ rescue CommandLine::Error => e
   puts
   puts "Output options:"
   puts "  --boring, -b               Output reports without ASCII colors."
-  puts "  --database ..."
-  puts "       sqlite3 <database>: Creates an sqlute database of all the parsed request information."
-  puts "       mysql <username> <database> <password>: Creates a mysql database of all the parsed request information."
-  puts "       oracle <username> <database> <password>: Creates an oracle database of all the parsed request information."
+  puts "  --database, -d <type> (<connection username password> | <filename>): Creates an database of all the parsed request information."
+  puts "      types: sqlite, mysql, oracle"
   puts "  --debug                    Print debug information while parsing."
   puts "  --file <filename>          Redirect output to file."
   puts "  --mail <emailaddress>      Send report to an email address."

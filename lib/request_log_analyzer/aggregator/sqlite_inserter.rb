@@ -12,7 +12,7 @@ module RequestLogAnalyzer::Aggregator
   # For every line type, a separate table will be created with a request_id field to point to
   # the request record, and a field for every parsed value. Finally, a warnings table will be
   # created to log all parse warnings.
-  class DatabaseInserter < Base
+  class SqliteInserter < Base
 
     attr_reader :request_count, :sources, :database
 

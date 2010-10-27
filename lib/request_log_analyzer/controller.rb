@@ -26,7 +26,7 @@ module RequestLogAnalyzer
       options = {}
       
       # Copy fields
-      options[:database_type]  = arguments[:database][0] if arguments[:database]
+      options[:database]       = arguments[:database]
       options[:reset_database] = arguments[:reset_database]
       options[:debug]          = arguments[:debug]
       options[:yaml]           = arguments[:yaml] || arguments[:dump]
@@ -49,26 +49,6 @@ module RequestLogAnalyzer
       options[:silent]         = arguments[:silent] 
       options[:parse_strategy] = arguments[:parse_strategy] 
       
-      #TODO: Refactor
-      if options[:database_type]
-         options[:database] = {}
-         case options[:database_type]
-         when "mysql"
-            options[:database][:adapter] = "mysql"
-            options[:database][:username] = arguments[:database][1]
-            options[:database][:database] = arguments[:database][2]
-            options[:database][:password] = arguments[:database][3]
-         when "sqlite3"
-            options[:database][:adapter] = "sqlite3"
-            options[:database][:database] = arguments[:database][1]
-         when "oracle"
-            options[:database][:adapter] = "oracle_enhanced"
-            options[:database][:username] = arguments[:database][1]
-            options[:database][:database] = arguments[:database][2]
-            options[:database][:password] = arguments[:database][3]
-         end
-      end
-   
       # Apache format workaround
       if arguments[:rails_format]
         options[:format] = {:rails => arguments[:rails_format]}
@@ -209,6 +189,7 @@ module RequestLogAnalyzer
                                                                  :source_files => options[:source_files], 
                                                                  :parse_strategy => options[:parse_strategy]),
                        { :output         => output_instance,
+                         :database_type  => options[:database_type],
                          :database       => options[:database],                # FUGLY!
                          :yaml           => options[:yaml], 
                          :reset_database => options[:reset_database],
@@ -248,9 +229,9 @@ module RequestLogAnalyzer
       controller.add_aggregator(:echo)                if options[:debug]
       
       if options[:database] 
-         controller.add_aggregator(:database_inserter)   if options[:database_type] == 'sqlite3' && !options[:aggregator].include?('sqlite3')
-         controller.add_aggregator(:mysql_inserter)   if options[:database_type] == 'mysql' && !options[:aggregator].include?('mysql')
-         controller.add_aggregator(:oracle_inserter)   if options[:database_type] == 'oracle' && !options[:aggregator].include?('oracle')
+         controller.add_aggregator(:sqlite_inserter)   if options[:database][0] == 'sqlite3' && !options[:aggregator].include?('sqlite3')
+         controller.add_aggregator(:mysql_inserter)   if options[:database][0] == 'mysql' && !options[:aggregator].include?('mysql')
+         controller.add_aggregator(:oracle_inserter)   if options[:database][0] == 'oracle' && !options[:aggregator].include?('oracle')
       end
       
       file_format.setup_environment(controller)

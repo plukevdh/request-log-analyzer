@@ -20,7 +20,10 @@ module RequestLogAnalyzer::Aggregator
     # current file format
     def prepare
       @sources = {}
-      @database = RequestLogAnalyzer::Database.new(options[:database])
+      @database = RequestLogAnalyzer::Database.new(:adapter => "mysql2", 
+                                                   :database => options[:database][0],
+                                                   :username => options[:database][1],
+                                                   :password => options[:database[2])
       @database.file_format = source.file_format
 
       database.drop_database_schema! if options[:reset_database]

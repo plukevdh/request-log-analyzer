@@ -58,13 +58,13 @@ describe RequestLogAnalyzer, 'running from command line' do
   end
 
   it "should run with the --database sqlite3 option" do
-    run("#{log_fixture(:rails_1x)} --database sqlite3 #{temp_output_file(:database)}")
+    run("#{log_fixture(:rails_1x)} --database sqlite #{temp_output_file(:database)}")
     File.exist?(temp_output_file(:database)).should be_true
   end
 
   it "should run with the --database mysql option" do
     run("#{log_fixture(:rails_1x)} --database mysql root analyst --reset-database")
-    ActiveRecord::Base.establish_connection(:adapter => 'mysql', :username => 'root', :database => 'analyst')
+    ActiveRecord::Base.establish_connection(:adapter => 'mysql2', :username => 'root', :password => "rock#ROLE", :database => 'analyst')
     ActiveRecord::Base.connection.select_all("select * from processing_lines").empty?.should_not be true
   end
 

@@ -20,7 +20,7 @@ module RequestLogAnalyzer::Aggregator
     # current file format
     def prepare
       @sources = {}
-      @database = RequestLogAnalyzer::Database.new(options[:database])
+      @database = RequestLogAnalyzer::Database.new(:adapter => "sqlite3", :database => options[:database])
       @database.file_format = source.file_format
 
       database.drop_database_schema! if options[:reset_database]

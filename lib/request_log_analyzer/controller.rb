@@ -26,6 +26,7 @@ module RequestLogAnalyzer
       options = {}
       
       # Copy fields
+      options[:database_type]  = defined?(argument[:database]) ? arguments[:database].shift : false
       options[:database]       = arguments[:database]
       options[:reset_database] = arguments[:reset_database]
       options[:debug]          = arguments[:debug]
@@ -228,10 +229,10 @@ module RequestLogAnalyzer
       controller.add_aggregator(:summarizer)          if options[:aggregator].empty?
       controller.add_aggregator(:echo)                if options[:debug]
       
-      if options[:database] 
-         controller.add_aggregator(:sqlite_inserter)   if options[:database][0] == 'sqlite3' && !options[:aggregator].include?('sqlite3')
-         controller.add_aggregator(:mysql_inserter)   if options[:database][0] == 'mysql' && !options[:aggregator].include?('mysql')
-         controller.add_aggregator(:oracle_inserter)   if options[:database][0] == 'oracle' && !options[:aggregator].include?('oracle')
+      if options[:database_type] 
+         controller.add_aggregator(:sqlite_inserter)   if options[:database_type] == 'sqlite' && !options[:aggregator].include?('sqlite')
+         controller.add_aggregator(:mysql_inserter)   if options[:database_type] == 'mysql' && !options[:aggregator].include?('mysql')
+         controller.add_aggregator(:oracle_inserter)   if options[:database_type] == 'oracle' && !options[:aggregator].include?('oracle')
       end
       
       file_format.setup_environment(controller)

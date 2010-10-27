@@ -15,18 +15,33 @@ describe RequestLogAnalyzer::FileFormat::Rails do
             :path => '/queries', :ip => '127.0.0.1', :timestamp => 20100225161518)
     end
     
+    it "should parse :started lines in Oct, Nov and Dec correctly" do
+      line = 'Started GET "/queries" for 127.0.0.1 at Thu Oct 25 16:15:18 -0800 2010'
+      @file_format.should parse_line(line).as(:started).and_capture(:method => 'GET',
+            :path => '/queries', :ip => '127.0.0.1', :timestamp => 20101025161518)
+    end
+    
+    it "should parse :started lines in Ruby 1.9.2 format correctly" do
+      line = 'Started GET "/queries" for 127.0.0.1 at 2010-10-26 02:27:15 +0000'
+      @file_format.should parse_line(line).as(:started).and_capture(:method => 'GET',
+            :path => '/queries', :ip => '127.0.0.1', :timestamp => 20101026022715)
+    end
+
     it "should parse :processing lines correctly" do
       line = ' Processing by QueriesController#index as HTML'
       @file_format.should parse_line(line).as(:processing).and_capture(
         :controller => 'QueriesController', :action => 'index', :format => 'HTML')
     end
-    
-    
-    # it "should parse beta :completed lines correctly" do
-    #   line = 'Completed in 9ms (Views: 4.9ms | ActiveRecord: 0.5ms) with 200'
-    #   @file_format.should parse_line(line).as(:completed).and_capture(
-    #       :duration => 0.009, :status => 200)
-    # end
+    it "should parse nested :processing lines correctly" do
+      line = ' Processing by Projects::QueriesController#index as HTML'
+      @file_format.should parse_line(line).as(:processing).and_capture(
+        :controller => 'Projects::QueriesController', :action => 'index', :format => 'HTML')
+    end
+    it "should parse :processing lines correctly with format */*" do
+      line = '  Processing by ProjectsController#avatar as */*'
+      @file_format.should parse_line(line).as(:processing).and_capture(
+        :controller => 'ProjectsController', :action => 'avatar', :format => '*/*')
+    end
     
     it "should parse :completed lines correctly" do
       line = 'Completed 200 OK in 170ms (Views: 78.4ms | ActiveRecord: 48.2ms)'
@@ -34,6 +49,12 @@ describe RequestLogAnalyzer::FileFormat::Rails do
           :duration => 0.170, :status => 200)
     end
     
+    it "should parse :completed lines correctly when ActiveRecord is not mentioned" do
+      line = 'Completed 200 OK in 364ms (Views: 31.4ms)'
+      @file_format.should parse_line(line).as(:completed).and_capture(:duration => 0.364, :status => 200)
+    end
+    
+
     it "should pase :failure lines correctly" do
       line = "ActionView::Template::Error (undefined local variable or method `field' for #<Class>) on line #3 of /Users/willem/Code/warehouse/app/views/queries/execute.csv.erb:"
       @file_format.should parse_line(line).as(:failure).and_capture(:line => 3, 

@@ -12,7 +12,7 @@ module RequestLogAnalyzer::FileFormat
     line_definition :started do |line|
       line.header = true
       line.teaser = /Started /
-      line.regexp = /Started ([A-Z]+) "([^"]+)" for (#{ip_address}) at (#{timestamp('%a %b %d %H:%M:%S %z %Y')})/
+      line.regexp = /Started ([A-Z]+) "([^"]+)" for (#{ip_address}) at (#{timestamp('%a %b %d %H:%M:%S %z %Y')}|#{timestamp('%Y-%m-%d %H:%M:%S %z')})/
       
       line.capture(:method)
       line.capture(:path)
@@ -23,7 +23,7 @@ module RequestLogAnalyzer::FileFormat
     # Processing by QueriesController#index as HTML
     line_definition :processing do |line|
       line.teaser = /Processing by /
-      line.regexp = /Processing by (\w+)\#(\w+) as (\w+)/
+      line.regexp = /Processing by ([A-Za-z0-9\-:]+)\#(\w+) as ([\w\/\*]+)/
       
       line.capture(:controller)
       line.capture(:action)
@@ -36,8 +36,8 @@ module RequestLogAnalyzer::FileFormat
     line_definition :completed do |line|
       line.footer = true
       line.teaser = /Completed /
-      line.regexp = /Completed (\d+)? .*in (\d+)ms(?:[^(]*\(Views: ((?:\d|\.)+)ms .* ActiveRecord: ((?:\d|\.)+)ms\))?/
-
+      line.regexp = /Completed (\d+)? .*in (\d+(?:\.\d+)?)ms(?:[^\(]*\(Views: (\d+(?:\.\d+)?)ms .* ActiveRecord: (\d+(?:\.\d+)?)ms\))?/
+      
       line.capture(:status).as(:integer)
       line.capture(:duration).as(:duration, :unit => :msec)
       line.capture(:view).as(:duration, :unit => :msec)
@@ -85,14 +85,23 @@ module RequestLogAnalyzer::FileFormat
       MONTHS = %w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)
       
       def convert_timestamp(value, definition)
-        value.gsub!(/\W/,'')
-        time_as_str = value[-4..-1] # year
-        # convert the month to a 2-digit representation
-        month = MONTHS.index(value[3..5])+1
-        month < 10 ? time_as_str << "0#{month}" : time_as_str << month
-        
-        time_as_str << value[6..13] # day of month + time
-        time_as_str.to_i
+        # the time value can be in 2 formats: 
+        # - 2010-10-26 02:27:15 +0000 (ruby 1.9.2)
+        # - Thu Oct 25 16:15:18 -0800 2010
+        if value =~ /^#{CommonRegularExpressions::TIMESTAMP_PARTS['Y']}/
+          value.gsub!(/\W/,'')
+          value[0..13].to_i
+        else
+          value.gsub!(/\W/,'')
+          time_as_str = value[-4..-1] # year
+          # convert the month to a 2-digit representation
+          month = MONTHS.index(value[3..5])+1
+          month < 10 ? time_as_str << "0#{month}" : time_as_str << month.to_s
+
+          time_as_str << value[6..13] # day of month + time
+          time_as_str.to_i
+        end
+
       end
     end
 

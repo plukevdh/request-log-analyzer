@@ -25,9 +25,9 @@ module RequestLogAnalyzer::FileFormat
       lines.each do |line|
         line = line.to_sym
         if LINE_COLLECTIONS.has_key?(line)
-          LINE_COLLECTIONS[line].each { |l| definitions_hash[l] = LINE_DEFINITIONS[l] }
+          LINE_COLLECTIONS[line].each { |l| definitions_hash[l] ||= LINE_DEFINITIONS[l] }
         elsif LINE_DEFINITIONS.has_key?(line)
-          definitions_hash[line] = LINE_DEFINITIONS[line]
+          definitions_hash[line] ||= LINE_DEFINITIONS[line]
         else
           raise "Unrecognized Rails log line name: #{line.inspect}!"
         end
@@ -82,8 +82,8 @@ module RequestLogAnalyzer::FileFormat
 
     # Rails > 2.1 completed line example
     # Completed in 614ms (View: 120, DB: 31) | 200 OK [http://floorplanner.local/demo]
-    RAILS_22_COMPLETED = /Completed in (\d+)ms \((?:View: (\d+), )?DB: (\d+)\) \| (\d\d\d).+\[(http.+)\]/
-
+    RAILS_22_COMPLETED = /Completed in (\d+)ms \((?:View: (\d+))?,?(?:.?DB: (\d+))?\)? \| (\d{3}).+\[(http.+)\]/
+                        
     # A hash of definitions for all common lines in Rails logs.
     LINE_DEFINITIONS = {
       :processing => RequestLogAnalyzer::LineDefinition.new(:processing, :header => true,

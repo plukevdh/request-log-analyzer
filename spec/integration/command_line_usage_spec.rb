@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../spec_helper.rb'
+require 'spec_helper'
 
 describe RequestLogAnalyzer, 'running from command line' do
 
@@ -38,7 +38,7 @@ describe RequestLogAnalyzer, 'running from command line' do
 
   it "should not write output with the --silent option" do
     output = run("#{log_fixture(:rails_1x)} --silent --file #{temp_output_file(:report)}")
-    output.to_s.should eql("")
+    output.should be_empty
     File.exist?(temp_output_file(:report)).should be_true
   end
 
@@ -97,7 +97,7 @@ describe RequestLogAnalyzer, 'running from command line' do
   it "should dump the results to a YAML file" do
     run("#{log_fixture(:rails_1x)} --yaml #{temp_output_file(:yaml)}")
     File.exist?(temp_output_file(:yaml)).should be_true
-    YAML::load(File.read(temp_output_file(:yaml))).should have_at_least(1).item
+    YAML.load(File.read(temp_output_file(:yaml))).should have_at_least(1).item
   end
 
   it "should parse 4 requests from the standard input" do

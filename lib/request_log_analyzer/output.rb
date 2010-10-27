@@ -1,11 +1,10 @@
 # Module for generating output
 module RequestLogAnalyzer::Output
 
-  # Load class files if needed
-  def self.const_missing(const)
-    RequestLogAnalyzer::load_default_class_file(self, const)
-  end
-
+  autoload :FixedWidth, 'request_log_analyzer/output/fixed_width'
+  autoload :HTML,       'request_log_analyzer/output/html'
+  autoload :FancyHTML,  'request_log_analyzer/output/fancy_html'
+  
   # Loads a Output::Base subclass instance.
   def self.load(file_format, *args)
     
@@ -21,7 +20,7 @@ module RequestLogAnalyzer::Output
     elsif file_format.kind_of?(String) && File.exist?(file_format)
       # load a format from a ruby file
       require file_format
-      const = RequestLogAnalyzer::to_camelcase(File.basename(file_format, '.rb'))
+      const = RequestLogAnalyzer.to_camelcase(File.basename(file_format, '.rb'))
       if RequestLogAnalyzer::FileFormat.const_defined?(const)
         klass = RequestLogAnalyzer::Output.const_get(const)
       elsif Object.const_defined?(const)
@@ -32,7 +31,7 @@ module RequestLogAnalyzer::Output
 
     else
       # load a provided file format
-      klass = RequestLogAnalyzer::Output.const_get(RequestLogAnalyzer::to_camelcase(file_format))
+      klass = RequestLogAnalyzer::Output.const_get(RequestLogAnalyzer.to_camelcase(file_format))
     end
 
     # check the returned klass to see if it can be used

@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../../spec_helper'
+require 'spec_helper'
 
 describe RequestLogAnalyzer::FileFormat::Rails do
 
@@ -73,6 +73,16 @@ describe RequestLogAnalyzer::FileFormat::Rails do
         it "should parse a Rails 2.2 style :completed line correctly" do
           line = prefix + 'Completed in 614ms (View: 120, DB: 31) | 200 OK [http://floorplanner.local/demo]'
           @rails.should parse_line(line).as(:completed).and_capture(:duration => 0.614, :db => 0.031, :view => 0.120, :status => 200, :url => 'http://floorplanner.local/demo')
+        end
+
+        it "should parse a Rails 2.2 style :completed line correctly when AR is disabled" do
+          line = prefix + 'Completed in 597ms (View: 298 | 200 OK [http://shapado.com]'
+          @rails.should parse_line(line).as(:completed).and_capture(:duration => 0.597, :db => nil, :view => 0.298, :status => 200, :url => 'http://shapado.com')
+        end
+        
+        it "should parse a Rails 2.2 style :completed line without view" do
+          line = prefix + "Completed in 148ms (DB: 0) | 302 Found [http://iwp-sod.hargray.org/login]"
+          @rails.should parse_line(line).as(:completed).and_capture(:duration => 0.148, :db => 0.0, :view => nil, :status => 302, :url => 'http://iwp-sod.hargray.org/login')
         end
 
         it "should parse a :failure line with exception correctly" do

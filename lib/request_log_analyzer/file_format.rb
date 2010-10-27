@@ -1,8 +1,18 @@
 module RequestLogAnalyzer::FileFormat
 
-  def self.const_missing(const) # :nodoc:
-    RequestLogAnalyzer::load_default_class_file(self, const)
-  end
+  autoload :Rails,            'request_log_analyzer/file_format/rails'
+  autoload :Rails3,           'request_log_analyzer/file_format/rails3'
+  autoload :RailsDevelopment, 'request_log_analyzer/file_format/rails_development'
+  autoload :Oink,             'request_log_analyzer/file_format/oink'
+  autoload :Rack,             'request_log_analyzer/file_format/rack'
+  autoload :Merb,             'request_log_analyzer/file_format/merb'
+  autoload :Mysql,            'request_log_analyzer/file_format/mysql'
+  autoload :Postgresql,       'request_log_analyzer/file_format/postgresql'
+  autoload :DelayedJob,       'request_log_analyzer/file_format/delayed_job'
+  autoload :DelayedJob2,      'request_log_analyzer/file_format/delayed_job2'
+  autoload :DelayedJob21,     'request_log_analyzer/file_format/delayed_job21'
+  autoload :Apache,           'request_log_analyzer/file_format/apache'
+  autoload :AmazonS3,         'request_log_analyzer/file_format/amazon_s3'
 
   # Loads a FileFormat::Base subclass instance.
   # You can provide:
@@ -29,7 +39,7 @@ module RequestLogAnalyzer::FileFormat
         require File.dirname(__FILE__) + '/file_format/' + file_format
       end  
 
-      const = RequestLogAnalyzer::to_camelcase(File.basename(file_format, '.rb'))
+      const = RequestLogAnalyzer.to_camelcase(File.basename(file_format, '.rb'))
       if RequestLogAnalyzer::FileFormat.const_defined?(const)
         klass = RequestLogAnalyzer::FileFormat.const_get(const)
       elsif Object.const_defined?(const)
@@ -40,7 +50,7 @@ module RequestLogAnalyzer::FileFormat
 
     else
       # load a provided file format
-      klass = RequestLogAnalyzer::FileFormat.const_get(RequestLogAnalyzer::to_camelcase(file_format))
+      klass = RequestLogAnalyzer::FileFormat.const_get(RequestLogAnalyzer.to_camelcase(file_format))
     end
 
     # check the returned klass to see if it can be used
@@ -52,7 +62,7 @@ module RequestLogAnalyzer::FileFormat
   
   # Returns an array of all FileFormat instances that are shipped with request-log-analyzer by default.
   def self.all_formats
-    @all_formats ||= Dir[File.dirname(__FILE__) + '/file_format/*.rb'].map do |file| 
+    @all_formats ||= Dir[File.expand_path('file_format/*.rb', File.dirname(__FILE__))].map do |file| 
       self.load(File.basename(file, '.rb')) 
     end
   end
@@ -252,10 +262,20 @@ module RequestLogAnalyzer::FileFormat
       request_class.create(self, *hashes)
     end
 
-    # Checks whether the line definitions form a valid language.
-    # A file format should have at least a header and a footer line type
+    # Checks whether the file format is valid so it can be safely used with RLA.
     def valid?
+      valid_line_definitions? && valid_request_class?
+    end
+
+    # Checks whether the line definitions form a valid language.
+    # A file format should have at least a header and a footer line type    
+    def valid_line_definitions?
       line_definitions.any? { |(name, ld)| ld.header } && line_definitions.any? { |(name, ld)| ld.footer }
+    end
+    
+    # Checks whether the request class inherits from the base Request class.
+    def valid_request_class?
+      request_class.ancestors.include?(RequestLogAnalyzer::Request)
     end
 
     # Returns true if this language captures the given symbol in one of its line definitions
